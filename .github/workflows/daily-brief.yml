@@ -11,6 +11,14 @@ on:
         description: "Brief date (YYYY-MM-DD). Leave blank for today."
         required: false
         default: ""
+  # Smoke test: any change to the pipeline re-runs it. These runs never overwrite an
+  # existing brief for the day (no --force); scheduled and manual runs do.
+  push:
+    paths:
+      - "scripts/**"
+      - "prompts/**"
+      - "requirements.txt"
+      - ".github/workflows/daily-brief.yml"
 
 permissions:
   contents: write
@@ -52,7 +60,10 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           BRIEF_MODEL: ${{ vars.BRIEF_MODEL }}
-        run: python scripts/build_brief.py --date "${{ steps.d.outputs.date }}"
+        run: |
+          FORCE=""
+          if [ "${{ github.event_name }}" != "push" ]; then FORCE="--force"; fi
+          python scripts/build_brief.py --date "${{ steps.d.outputs.date }}" $FORCE
 
       - name: Commit and push
         run: |

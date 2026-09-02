@@ -100,7 +100,13 @@ def main() -> int:
     ap.add_argument("--model", default=os.environ.get("BRIEF_MODEL", DEFAULT_MODEL))
     ap.add_argument("--no-ai", action="store_true", help="force Tier 0 even if a key is set")
     ap.add_argument("--no-write", action="store_true")
+    ap.add_argument("--force", action="store_true", help="overwrite an existing brief for this date")
     a = ap.parse_args()
+
+    target = BRIEFS_DIR / f"{a.date}.md"
+    if target.exists() and not a.force and not a.no_write:
+        print(f"briefs/{a.date}.md already exists; not overwriting (use --force)", file=sys.stderr)
+        return 0
 
     prices = load(DATA_DIR / f"prices-{a.date}.json")
     news = load(DATA_DIR / f"news-{a.date}.json")
@@ -121,7 +127,7 @@ def main() -> int:
     print(out)
     if not a.no_write:
         BRIEFS_DIR.mkdir(exist_ok=True)
-        (BRIEFS_DIR / f"{a.date}.md").write_text(out)
+        target.write_text(out)
         print(f"wrote briefs/{a.date}.md [{tier}]", file=sys.stderr)
     return 0
 
