@@ -28,6 +28,9 @@ def test_build_prices_with_fixture(monkeypatch):
     assert by["brent"]["last"] == 95.68
     assert abs(by["brent"]["day_pct"] - (95.68 - 94.65) / 94.65 * 100) < 1e-9
     assert by["jkm"]["last"] is None  # not on Yahoo, no OilPriceAPI key
+    assert by["brent"]["history"][-1] == {"date": "2026-09-01", "close": 95.68}
+    assert by["wti"]["history"] == []
+    assert "history" not in by["brent"]["yahoo"]
     s = d["spreads"]
     assert abs(s["brent_wti"] - (95.68 - 91.85)) < 1e-9
     assert abs(s["crack_321"] - ((2 * 2.60 * 42 + 3.00 * 42) / 3 - 91.85)) < 1e-9

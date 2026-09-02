@@ -17,6 +17,8 @@ question bank, and runs mock interviews.
 - `networking/tuesday-cheatsheet.md` - company facts, questions to ask, intro template.
 - `.claude/skills/mock-interview/SKILL.md` - `/mock-interview` skill.
 - `.github/workflows/daily-brief.yml` - runs the pipeline daily and commits the brief.
+- `docs/index.html` - the dashboard (single file). `scripts/build_dashboard_data.py` writes `site/data.json` for it;
+  `--inline` embeds the data for an artifact preview. `.github/workflows/dashboard.yml` deploys `site/` to Pages.
 - `.mcp.json` - OilPriceAPI MCP server for live oil/gas prices in Claude Code sessions.
 
 ## Rules for Claude in this repo

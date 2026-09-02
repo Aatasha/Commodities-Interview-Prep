@@ -5,3 +5,6 @@ __pycache__/
 .pytest_cache/
 .env
 .DS_Store
+
+# built dashboard output (GitHub Actions deploys it to Pages)
+site/

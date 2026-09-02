@@ -1,0 +1,58 @@
+name: Dashboard (GitHub Pages)
+
+on:
+  schedule:
+    # Hourly refresh of prices during European/US hours, weekdays. The daily brief
+    # workflow also triggers this after it commits. UTC.
+    - cron: "15 6-20 * * 1-5"
+  workflow_run:
+    workflows: ["Daily commodities brief"]
+    types: [completed]
+  push:
+    paths:
+      - "docs/**"
+      - "scripts/build_dashboard_data.py"
+      - ".github/workflows/dashboard.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_branch || github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Refresh prices (not committed; the daily job owns data/)
+        env:
+          OILPRICEAPI_KEY: ${{ secrets.OILPRICEAPI_KEY }}
+        run: python scripts/fetch_prices.py --date "$(date -u +%F)" || true
+      - name: Build site
+        run: python scripts/build_dashboard_data.py
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

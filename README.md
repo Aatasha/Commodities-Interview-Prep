@@ -10,6 +10,8 @@ Glencore candidate; works for any physical trading house. It gives you:
    with model answers and the pushback a trader would give.
 3. **A mock-interview skill** for Claude Code, plus a paste-in prompt for claude.ai chat.
 4. **A networking cheat sheet** in `networking/` for the reception on 8 Sep 2026.
+5. **A dashboard** (`docs/index.html`) on GitHub Pages: prices, spreads, curves, 90-day
+   charts, headlines, the brief, the cheat sheet, and the mock interviewer in one page.
 
 Everything runs on free tiers. Nothing depends on the person who built it.
 
@@ -22,7 +24,27 @@ Everything runs on free tiers. Nothing depends on the person who built it.
    - `OILPRICEAPI_KEY` from [oilpriceapi.com](https://www.oilpriceapi.com/auth/signup) (free tier). Adds source-timestamped Brent, WTI, Henry Hub, TTF, JKM, coal and EU carbon.
    - Optional variable `BRIEF_MODEL` (Settings, Variables) to override the model, default `claude-opus-5`.
 4. **Run it once by hand**: Actions, "Daily commodities brief", "Run workflow". A file appears in `briefs/` a few minutes later. From then on it runs daily at 06:30 UK time.
-5. **Read the brief on your phone** from the GitHub app or the repo page.
+5. **Turn on the dashboard**: Settings, Pages, Source = "GitHub Actions". Then Actions, "Dashboard (GitHub Pages)", "Run workflow". Your page is at `https://<you>.github.io/<repo>/`. It rebuilds after each daily brief and hourly on weekdays.
+6. **Read the brief on your phone** from the dashboard, the GitHub app, or the repo page.
+
+## The dashboard
+
+`docs/index.html` is one file with no build step. The Pages workflow writes `site/data.json`
+(latest prices with 90-day history, spreads, headlines, the latest brief, the cheat sheet and
+the parsed question bank) next to it. Tabs: Overview, Charts, News, Brief, Interview, Cheat sheet.
+
+The **Interview** tab runs the mock interview inside the page. It marks your answers with
+Claude in one of two ways, detected automatically:
+
+- Inside claude.ai (when the page is published as an artifact), it asks Claude through your
+  own claude.ai account. No key. You are asked to allow it once.
+- On GitHub Pages, open Settings in the tab and paste your own Anthropic API key. It is kept
+  in that browser's local storage only and sent straight to Anthropic. Use a key you can revoke.
+
+To publish the page as a claude.ai artifact from your own Claude Code session:
+`python scripts/build_dashboard_data.py --inline docs/index.html --out site/preview.html`
+and ask Claude to publish `site/preview.html` as an artifact with the `sample` capability.
+That copy is a snapshot; the Pages version refreshes itself.
 
 ## Using it for practice
 
@@ -64,7 +86,8 @@ LME prices are not free; COMEX copper is used as the proxy and labelled as such.
 - **Change how the brief reads:** edit `prompts/brief-analysis.md`. The template headings are used by the mock-interview skill, so keep them.
 - **Change the schedule:** the cron in `.github/workflows/daily-brief.yml` is in UTC. `30 5 * * *` is 06:30 BST; switch to `30 6 * * *` after clocks go back on 25 Oct 2026 if you want it to stay at 06:30 UK time.
 - **A ticker stops working:** the brief shows `n/a` and lists the error at the bottom of the prices table. Update the ticker in the instrument table.
-- **Pause it:** Actions tab, select the workflow, "Disable workflow". Or delete the `schedule:` block.
+- **Change the dashboard:** edit `docs/index.html`; pushing it redeploys Pages. Preview locally with the `--inline` command above and open `site/preview.html`.
+- **Pause it:** Actions tab, select the workflow, "Disable workflow". Or delete the `schedule:` block. Same for the dashboard workflow.
 - **Cost:** the free tier is free. The analysis tier uses your own Anthropic key: one run a day with up to 15 web searches costs a few cents to a few tens of cents depending on the model.
 
 ## Data sources

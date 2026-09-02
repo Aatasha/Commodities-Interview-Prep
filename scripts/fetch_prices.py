@@ -57,6 +57,7 @@ INSTRUMENTS = [
 ]
 
 # Explicit futures contracts for M1-M2 structure. Yahoo symbols look like CLV26.NYM.
+HISTORY_DAYS = 90     # closes kept per instrument for the dashboard charts
 MONTH_CODES = "FGHJKMNQUVXZ"
 CURVE_ROOTS = {"wti": "CL", "brent": "BZ"}
 
@@ -119,6 +120,7 @@ def fetch_yahoo(tickers: list[str], period: str, errors: list[str]) -> dict:
                 "prior": float(s.iloc[-2]) if len(s) >= 2 else None,
                 "week_ago": float(s.iloc[-6]) if len(s) >= 6 else None,
                 "asof": str(s.index[-1].date()),
+                "history": [{"date": str(ix.date()), "close": round(float(c), 4)} for ix, c in s.tail(HISTORY_DAYS).items()],
             }
         except Exception as exc:
             errors.append(f"{t}: {exc.__class__.__name__}: {exc}")
@@ -176,7 +178,9 @@ def build(date: str, period: str) -> dict:
         o = opa.get(inst["opa"]) if inst["opa"] else None
         row = {
             "key": inst["key"], "name": inst["name"], "unit": inst["unit"], "group": inst["group"],
-            "yahoo": y, "oilpriceapi": o,
+            "yahoo": {k: v for k, v in y.items() if k != "history"} if y else None,
+            "oilpriceapi": o,
+            "history": (y or {}).get("history", []),
         }
         # Preferred value: Yahoo (exchange close, with history for % change); OilPriceAPI fills gaps.
         if y:
@@ -299,7 +303,7 @@ def to_markdown(d: dict) -> str:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--date", default=dt.date.today().isoformat())
-    ap.add_argument("--period", default="15d", help="yfinance history window (default 15d)")
+    ap.add_argument("--period", default="120d", help="yfinance history window (default 120d)")
     ap.add_argument("--no-write", action="store_true")
     a = ap.parse_args()
 
