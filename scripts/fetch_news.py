@@ -23,7 +23,7 @@ SECTORS = {
     "Oil": ["OPEC+ output decision", "Brent crude oil prices", "Russia oil sanctions tanker", "Middle East oil supply Strait of Hormuz"],
     "Metals": ["LME copper price", "cobalt DRC export", "China copper demand smelter", "aluminium tariffs"],
     "Gas & LNG": ["TTF gas price Europe storage", "LNG cargo Asia JKM", "Qatar LNG"],
-    "Coal": ["Newcastle thermal coal price", "coal exports Indonesia Australia India demand"],
+    "Coal": ["thermal coal price", "Newcastle coal", "coal imports China India", "coking coal price"],
     "Agri": ["wheat prices Black Sea", "corn soybean prices weather Brazil", "Bunge Viterra grain trading"],
     "Macro & geopolitics": ["Federal Reserve rate decision commodities", "China stimulus commodities demand", "US dollar index commodities"],
     "Glencore": ["Glencore"],
@@ -100,7 +100,7 @@ def gdelt(query: str, errors: list[str], hours: int = 48) -> list[dict]:
             "https://api.gdeltproject.org/api/v2/doc/doc",
             params={"query": f"{query} sourcelang:english", "mode": "artlist", "maxrecords": PER_QUERY,
                     "format": "json", "timespan": f"{hours}h", "sort": "datedesc"},
-            headers={"User-Agent": UA}, timeout=25)
+            headers={"User-Agent": UA}, timeout=15)
         r.raise_for_status()
         arts = r.json().get("articles", []) if r.text.strip() else []
     except Exception as exc:
