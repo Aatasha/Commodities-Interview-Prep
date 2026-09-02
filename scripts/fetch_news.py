@@ -29,14 +29,48 @@ SECTORS = {
     "Glencore": ["Glencore"],
     "Trading houses": ["Trafigura OR Vitol OR Mercuria OR Gunvor trading profit"],
 }
-PER_QUERY = 6
+PER_QUERY = 8
 PER_SECTOR = 10
+MAX_AGE_DAYS = 3          # drop anything older than this; Google News search is not date-sorted
+
+
+def parse_when(published: str):
+    """Parse RSS (RFC 2822) or GDELT (YYYYMMDDTHHMMSSZ) dates; None if unknown."""
+    import datetime as _dt
+    from email.utils import parsedate_to_datetime
+    if not published:
+        return None
+    try:
+        d = parsedate_to_datetime(published)
+        return d if d.tzinfo else d.replace(tzinfo=_dt.timezone.utc)
+    except Exception:
+        pass
+    try:
+        return _dt.datetime.strptime(published, "%Y%m%dT%H%M%SZ").replace(tzinfo=_dt.timezone.utc)
+    except Exception:
+        return None
+
+
+def recent_sorted(items: list[dict], now=None, max_age_days: int = MAX_AGE_DAYS) -> list[dict]:
+    """Keep items published within max_age_days (undated items are kept last), newest first."""
+    import datetime as _dt
+    now = now or _dt.datetime.now(_dt.timezone.utc)
+    cutoff = now - _dt.timedelta(days=max_age_days)
+    dated, undated = [], []
+    for it in items:
+        d = parse_when(it.get("published", ""))
+        if d is None:
+            undated.append(it)
+        elif d >= cutoff:
+            dated.append((d, it))
+    dated.sort(key=lambda x: x[0], reverse=True)
+    return [it for _, it in dated] + undated
 
 
 def google_news(query: str, errors: list[str]) -> list[dict]:
     import feedparser
     url = "https://news.google.com/rss/search?" + urllib.parse.urlencode(
-        {"q": query, "hl": "en-GB", "gl": "GB", "ceid": "GB:en"})
+        {"q": f"{query} when:{MAX_AGE_DAYS}d", "hl": "en-GB", "gl": "GB", "ceid": "GB:en"})
     try:
         feed = feedparser.parse(url, agent=UA)
         if getattr(feed, "bozo", False) and not feed.entries:
@@ -93,10 +127,12 @@ def build(date: str, use_gdelt: bool) -> dict:
         items = []
         for q in queries:
             items += google_news(q, errors)
-        if use_gdelt and len(items) < 3:
+        recent = recent_sorted(dedupe(items))
+        if use_gdelt and len(recent) < 3:          # thin sector: top up from GDELT (last 48h)
             for q in queries[:2]:
                 items += gdelt(q, errors)
-        sectors[sector] = dedupe(items)[:PER_SECTOR]
+            recent = recent_sorted(dedupe(items))
+        sectors[sector] = recent[:PER_SECTOR]
     return {"date": date, "fetched_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
             "sectors": sectors, "errors": errors}
 

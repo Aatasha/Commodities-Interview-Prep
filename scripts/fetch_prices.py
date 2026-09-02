@@ -211,6 +211,13 @@ def build(date: str, period: str) -> dict:
             "contracts": [{"label": label, "last": p["last"], "asof": p["asof"]} for label, p in live],
         }
 
+    # Expired curve contracts legitimately return nothing; don't report them as errors
+    # when the curve itself resolved.
+    for k, pairs in curve.items():
+        if structure[k]["m2"] is not None:
+            dead = {f"{sym}: no data returned" for _, sym in pairs}
+            errors[:] = [e for e in errors if e not in dead]
+
     ttf_mmbtu = sp.eur_mwh_to_usd_mmbtu(v("ttf"), v("eurusd"))
     spreads_out = {
         "brent_wti": sp.brent_wti(v("brent"), v("wti")),

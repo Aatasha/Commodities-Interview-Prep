@@ -42,7 +42,7 @@ def tier0(date: str, prices: dict | None, news: dict | None) -> str:
         md = fetch_prices.to_markdown(prices)
         # drop the H1 line of the prices doc, keep the tables
         body = md.split("\n", 1)[1] if "\n" in md else md
-        L += ["## 1. Headline numbers", "", body.replace("## Spreads and structure", "## 2. Spreads and structure")]
+        L += ["## 1. Headline numbers", "", body.strip("\n").replace("## Spreads and structure", "## 2. Spreads and structure")]
     else:
         L += ["## 1. Headline numbers", "", "n/a - no prices file for this date.", "",
               "## 2. Spreads and structure", "", "n/a", ""]
