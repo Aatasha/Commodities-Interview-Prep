@@ -290,7 +290,7 @@ Coverage:
 - Pick one idea from the brief and state it as a mispricing, not a prediction: "The curve implies X, I think Y because Z". The best answers are about a spread, differential or arb where the mechanism is checkable, not a flat-price call.
 - Give the evidence: two or three facts (stocks, flows, policy) and one piece of contrarian logic (why the market is discounting it — positioning, a consensus narrative, a lag in data).
 - What changes your mind: a specific print or event with a threshold and a date.
-- Sizing to $10m VaR: pick the instrument, its daily vol, and back out the size (e.g. a spread with $0.15/bbl daily vol at 95% → 1.65 × 0.15 = ~$0.25/bbl VaR per bbl; $10m / $0.25 ≈ 40 million bbl-equivalents... which is too big for the market, so cap by liquidity and say so). Show you know limits bind before VaR does.
+- Sizing to $10m VaR: pick the instrument, its daily vol, and back out the size (e.g. a spread with $0.15/bbl daily vol at 95% → 1.65 × 0.15 = ~$0.25/bbl VaR per bbl; $10m / $0.25 ≈ 40 million bbl-equivalents — far too big for the market, so cap by liquidity and say so). Show you know limits bind before VaR does.
 - Stop and target: where you exit for a loss, where you take profit, and the time horizon.
 - Be willing to be challenged and to update in real time; the interviewer wants to see you think, not defend a script. If they demolish your view, say what part survives.
 **Pushback:**
