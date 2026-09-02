@@ -1,0 +1,14 @@
+{
+  "BZ=F":  {"last": 95.68, "prior": 94.65, "week_ago": 92.10, "asof": "2026-09-01"},
+  "CL=F":  {"last": 91.85, "prior": 90.72, "week_ago": 88.40, "asof": "2026-09-01"},
+  "RB=F":  {"last": 2.60,  "prior": 2.58,  "week_ago": 2.50,  "asof": "2026-09-01"},
+  "HO=F":  {"last": 3.00,  "prior": 2.97,  "week_ago": 2.90,  "asof": "2026-09-01"},
+  "NG=F":  {"last": 3.10,  "prior": 3.05,  "week_ago": 2.95,  "asof": "2026-09-01"},
+  "TTF=F": {"last": 35.0,  "prior": 34.5,  "week_ago": 33.0,  "asof": "2026-09-01"},
+  "HG=F":  {"last": 4.50,  "prior": 4.45,  "week_ago": 4.40,  "asof": "2026-09-01"},
+  "EURUSD=X": {"last": 1.10, "prior": 1.10, "week_ago": 1.09, "asof": "2026-09-01"},
+  "CLU26.NYM": {"last": 90.00, "prior": 89.50, "week_ago": 88.00, "asof": "2026-08-20"},
+  "CLV26.NYM": {"last": 91.85, "prior": 90.72, "week_ago": 88.40, "asof": "2026-09-01"},
+  "CLX26.NYM": {"last": 91.10, "prior": 90.00, "week_ago": 87.90, "asof": "2026-09-01"},
+  "CLZ26.NYM": {"last": 90.40, "prior": 89.40, "week_ago": 87.40, "asof": "2026-09-01"}
+}

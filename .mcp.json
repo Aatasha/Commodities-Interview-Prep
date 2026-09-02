@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "oilpriceapi": {
+      "command": "npx",
+      "args": ["-y", "oilpriceapi-mcp"],
+      "env": {
+        "OILPRICEAPI_KEY": "${OILPRICEAPI_KEY}"
+      }
+    }
+  }
+}
