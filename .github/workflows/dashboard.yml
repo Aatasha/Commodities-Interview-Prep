@@ -40,7 +40,7 @@ jobs:
       - name: Refresh prices (not committed; the daily job owns data/)
         env:
           OILPRICEAPI_KEY: ${{ secrets.OILPRICEAPI_KEY }}
-        run: python scripts/fetch_prices.py --date "$(date -u +%F)" || true
+        run: python scripts/fetch_prices.py --date "$(date -u +%F)" --period 1y --history-days 260 || true
       - name: Build site
         run: python scripts/build_dashboard_data.py
       - uses: actions/upload-pages-artifact@v3

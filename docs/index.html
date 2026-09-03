@@ -206,6 +206,9 @@
     <div class="panel">
       <div class="toolbar">
         <label class="small muted">Instrument <select id="histPick"></select></label>
+        <label class="small muted">Range <select id="rangePick">
+          <option value="30">30 days</option><option value="90" selected>90 days</option><option value="0">All</option>
+        </select></label>
         <span class="small muted" id="histNote"></span>
       </div>
       <div class="chartbox tall"><canvas id="histChart"></canvas></div>
@@ -217,6 +220,8 @@
           <option value="brent_m1_m2">Brent M1-M2 ($/bbl)</option>
           <option value="wti_m1_m2">WTI M1-M2 ($/bbl)</option>
           <option value="crack_321">3-2-1 crack ($/bbl)</option>
+          <option value="gasoline_crack">Gasoline crack ($/bbl)</option>
+          <option value="distillate_crack">Distillate crack ($/bbl)</option>
           <option value="ttf_usd_mmbtu">TTF ($/MMBtu)</option>
           <option value="ttf_minus_hh">TTF - Henry Hub ($/MMBtu)</option>
           <option value="copper_usd_t">Copper ($/t, COMEX)</option>
@@ -453,16 +458,18 @@
     const byLabel = (arr) => labels.map(l => { const c = arr.find(x => x.label.slice(2) === l); return c ? c.last : null; });
     make('curveChart', { type: 'line', data: { labels, datasets: [line('Brent', byLabel(b), cssVar('--series-1')), line('WTI', byLabel(w), cssVar('--series-2'))] }, options: baseOpts('$/bbl') });
   }
+  function rangeN() { return +$('#rangePick').value || 0; }
+  function tail(arr) { const n = rangeN(); return n ? arr.slice(-n) : arr; }
   function renderHist() {
     if (!window.Chart) return;
-    const key = $('#histPick').value; const r = inst(key); const h = D.history?.[key] || [];
+    const key = $('#histPick').value; const r = inst(key); const h = tail(D.history?.[key] || []);
     $('#histNote').textContent = h.length ? `${h.length} daily closes to ${h[h.length - 1].date} · ${r?.unit || ''} · Yahoo Finance` : 'No history for this instrument.';
     make('histChart', { type: 'line', data: { labels: h.map(p => p.date), datasets: [line(r?.name || key, h.map(p => p.close), cssVar('--series-1'), { pointRadius: 0, fill: false })] }, options: baseOpts(r?.unit) });
   }
   function renderDaily() {
     if (!window.Chart) return;
-    const key = $('#dailyPick').value; const rows = D.daily || [];
-    $('#dailyNote').textContent = rows.length < 2 ? `${rows.length} day of data so far; this chart fills in as the daily job runs.` : `${rows.length} days from the committed daily price files.`;
+    const key = $('#dailyPick').value; const rows = tail(D.daily || []);
+    $('#dailyNote').textContent = D.daily_note || (rows.length < 2 ? `${rows.length} day of data so far.` : `${rows.length} days.`);
     make('dailyChart', { type: 'line', data: { labels: rows.map(r => r.date), datasets: [line($('#dailyPick').selectedOptions[0].text, rows.map(r => r[key]), cssVar('--series-3'))] }, options: baseOpts() });
   }
 
@@ -641,6 +648,7 @@
   });
   $('#histPick').addEventListener('change', renderHist);
   $('#dailyPick').addEventListener('change', renderDaily);
+  $('#rangePick').addEventListener('change', () => { renderHist(); renderDaily(); });
   const mq = window.matchMedia('(prefers-color-scheme: dark)');
   const rethemeCharts = () => { if (!D) return; renderOverview(); if ($('#tab-charts').classList.contains('active')) { renderHist(); renderDaily(); } };
   mq.addEventListener ? mq.addEventListener('change', rethemeCharts) : mq.addListener(rethemeCharts);

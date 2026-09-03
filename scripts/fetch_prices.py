@@ -212,7 +212,7 @@ def build(date: str, period: str) -> dict:
         spread = sp.time_spread(m1, m2)
         structure[k] = {
             "m1": m1, "m2": m2, "spread": spread, "label": sp.structure_label(spread),
-            "contracts": [{"label": label, "last": p["last"], "asof": p["asof"]} for label, p in live],
+            "contracts": [{"label": label, "last": p["last"], "asof": p["asof"], "history": p.get("history", [])} for label, p in live],
         }
 
     # Expired curve contracts legitimately return nothing; don't report them as errors
@@ -301,12 +301,14 @@ def to_markdown(d: dict) -> str:
 
 
 def main() -> int:
+    global HISTORY_DAYS
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--date", default=dt.date.today().isoformat())
     ap.add_argument("--period", default="120d", help="yfinance history window (default 120d)")
+    ap.add_argument("--history-days", type=int, default=HISTORY_DAYS, help="closes kept per instrument (default 90)")
     ap.add_argument("--no-write", action="store_true")
     a = ap.parse_args()
-
+    HISTORY_DAYS = a.history_days
     d = build(a.date, a.period)
     md = to_markdown(d)
     print(md)

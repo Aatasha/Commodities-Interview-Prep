@@ -19,6 +19,9 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+import spreads as sp  # noqa: E402
+
 DATA_DIR, BRIEFS_DIR, Q_DIR = ROOT / "data", ROOT / "briefs", ROOT / "questions"
 CHEATSHEET = ROOT / "networking" / "tuesday-cheatsheet.md"
 BANKS = ["technical", "market-view", "behavioural", "mental-maths"]
@@ -73,6 +76,46 @@ def daily_series(files: list[Path]) -> list[dict]:
     return rows
 
 
+def daily_from_history(prices: dict | None) -> tuple[list[dict], str]:
+    """Recompute the spread series for every date in the instrument histories.
+
+    Flat-price spreads (Brent-WTI, cracks, TTF conversion, copper) use each instrument's own
+    history aligned by date. M1-M2 uses the two live front contracts' histories, so it is the
+    history of the current pair (e.g. BZX26-BZZ26), not a rolling front spread.
+    """
+    if not prices:
+        return [], ""
+    hist = {r["key"]: {h["date"]: h["close"] for h in r.get("history", [])} for r in prices.get("instruments", [])}
+    dates = sorted(hist.get("brent", {}))
+    if not dates:
+        return [], ""
+    pair = {}
+    for k in ("brent", "wti"):
+        cs = (prices.get("structure", {}).get(k) or {}).get("contracts", [])
+        if len(cs) >= 2 and cs[0].get("history") and cs[1].get("history"):
+            pair[k] = ({h["date"]: h["close"] for h in cs[0]["history"]},
+                       {h["date"]: h["close"] for h in cs[1]["history"]}, f"{cs[0]['label']}-{cs[1]['label']}")
+    rows = []
+    for d in dates:
+        g = lambda key: hist.get(key, {}).get(d)  # noqa: E731
+        m = lambda k: sp.time_spread(pair[k][0].get(d), pair[k][1].get(d)) if k in pair else None  # noqa: E731
+        ttf = sp.eur_mwh_to_usd_mmbtu(g("ttf"), g("eurusd"))
+        rows.append({
+            "date": d, "brent": g("brent"), "wti": g("wti"),
+            "brent_wti": sp.brent_wti(g("brent"), g("wti")),
+            "brent_m1_m2": m("brent"), "wti_m1_m2": m("wti"),
+            "crack_321": sp.crack_321(g("wti"), g("rbob"), g("ho")),
+            "gasoline_crack": sp.simple_crack(g("rbob"), g("wti")),
+            "distillate_crack": sp.simple_crack(g("ho"), g("wti")),
+            "ttf_usd_mmbtu": ttf, "ttf_minus_hh": sp.gas_spread(ttf, g("hh")),
+            "copper_usd_t": sp.usd_lb_to_usd_tonne(g("copper")), "source": "history",
+        })
+    pairs = ", ".join(v[2] for v in pair.values())
+    note = (f"{len(rows)} days recomputed from Yahoo closes ({dates[0]} to {dates[-1]})"
+            + (f"; M1-M2 is the current front pair {pairs}" if pairs else "; M1-M2 history n/a") + ".")
+    return rows, note
+
+
 def build(root: Path = ROOT) -> dict:
     data_dir, briefs_dir, q_dir = root / "data", root / "briefs", root / "questions"
     prices_file = latest("prices-*.json", data_dir)
@@ -97,11 +140,21 @@ def build(root: Path = ROOT) -> dict:
         f = q_dir / f"{bank}.md"
         questions[bank] = parse_questions(f.read_text()) if f.exists() else []
 
+    hist_rows, daily_note = daily_from_history(prices)
+    committed = daily_series(sorted(data_dir.glob("prices-*.json")))
+    by_date = {r["date"]: r for r in hist_rows}
+    for r in committed:  # the morning snapshots win over the recomputed close for the same day
+        by_date[r["date"]] = {**by_date.get(r["date"], {}), **{k: v for k, v in r.items() if v is not None}, "source": "daily"}
+    daily = [by_date[d] for d in sorted(by_date)]
+    if committed:
+        daily_note += f" {len(committed)} day(s) from the committed morning snapshots."
+
     return {
         "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         "prices": prices,
         "history": history,
-        "daily": daily_series(sorted(data_dir.glob("prices-*.json"))),
+        "daily": daily,
+        "daily_note": daily_note.strip(),
         "news": news,
         "brief": brief,
         "briefs_index": [f.stem for f in brief_files],
