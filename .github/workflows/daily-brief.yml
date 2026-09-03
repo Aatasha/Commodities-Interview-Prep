@@ -2,17 +2,19 @@ name: Daily commodities brief
 
 on:
   schedule:
-    # 05:30 UTC = 06:30 BST. Change to "30 6 * * *" after clocks go back (25 Oct 2026)
-    # if you want it to stay at 06:30 UK time.
+    # 05:30 UTC = 06:30 BST, plus a retry slot at 08:00 UTC in case GitHub skips or delays
+    # the first one (common for new schedules). The retry never overwrites a brief that
+    # already exists. After clocks go back (25 Oct 2026) use "30 6" and "0 9" to keep UK times.
     - cron: "30 5 * * *"
+    - cron: "0 8 * * *"
   workflow_dispatch:
     inputs:
       date:
         description: "Brief date (YYYY-MM-DD). Leave blank for today."
         required: false
         default: ""
-  # Smoke test: any change to the pipeline re-runs it. These runs never overwrite an
-  # existing brief for the day (no --force); scheduled and manual runs do.
+  # Smoke test: any change to the pipeline re-runs it. Only a manual "Run workflow"
+  # overwrites an existing brief for the day (--force); pushes and schedules never do.
   push:
     paths:
       - "scripts/**"
@@ -62,7 +64,7 @@ jobs:
           BRIEF_MODEL: ${{ vars.BRIEF_MODEL }}
         run: |
           FORCE=""
-          if [ "${{ github.event_name }}" != "push" ]; then FORCE="--force"; fi
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then FORCE="--force"; fi
           python scripts/build_brief.py --date "${{ steps.d.outputs.date }}" $FORCE
 
       - name: Commit and push

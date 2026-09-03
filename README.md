@@ -15,6 +15,8 @@ Glencore candidate; works for any physical trading house. It gives you:
 
 Everything runs on free tiers. Nothing depends on the person who built it.
 
+Handing it to someone else? Follow [HANDOVER.md](HANDOVER.md).
+
 ## Quick start (10 minutes)
 
 1. **Fork this repo** to your own GitHub account (keep it public: Actions minutes are free).
@@ -23,7 +25,7 @@ Everything runs on free tiers. Nothing depends on the person who built it.
    - `ANTHROPIC_API_KEY` from [console.anthropic.com](https://console.anthropic.com). Turns on the analysis tier of the brief (stories, questions, view). Without it you still get prices, spreads and headlines.
    - `OILPRICEAPI_KEY` from [oilpriceapi.com](https://www.oilpriceapi.com/auth/signup) (free tier). Adds source-timestamped Brent, WTI, Henry Hub, TTF, JKM, coal and EU carbon.
    - Optional variable `BRIEF_MODEL` (Settings, Variables) to override the model, default `claude-opus-5`.
-4. **Run it once by hand**: Actions, "Daily commodities brief", "Run workflow". A file appears in `briefs/` a few minutes later. From then on it runs daily at 06:30 UK time.
+4. **Run it once by hand**: Actions, "Daily commodities brief", "Run workflow". A file appears in `briefs/` a few minutes later. From then on it runs daily at 06:30 UK time, with a retry slot at 09:00 because GitHub sometimes skips or delays scheduled runs. A manual run replaces that day's brief; scheduled runs never overwrite one.
 5. **Turn on the dashboard**: Settings, Pages, Source = "GitHub Actions". Then Actions, "Dashboard (GitHub Pages)", "Run workflow". Your page is at `https://<you>.github.io/<repo>/`. It rebuilds after each daily brief and hourly on weekdays.
 6. **Read the brief on your phone** from the dashboard, the GitHub app, or the repo page.
 
